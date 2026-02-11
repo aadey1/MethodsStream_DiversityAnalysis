@@ -67,7 +67,6 @@ This repository includes three comprehensive instruction documents:
     
    **The Dataset**
         This analysis uses the same benthic macroinvertebrate dataset as the IBI (Index of Biotic Integrity) assessment module. The data includes:
-        
              141 unique sampling sites
              182 taxa (primarily family-level identifications)
              23 years of monitoring data (1994-2022)
@@ -84,7 +83,6 @@ This repository includes three comprehensive instruction documents:
        Hill numbers (β = γ/α): Intuitive interpretation ("how many times composition changes")
        Jaccard: Classic metric, good for presence/absence
        Bray-Curtis: Accounts for abundance, sensitive to dominant taxa
-       
        Each method answers slightly different questions, providing complementary insights into community structure.
 
 🎯 **Learning Objectives**
@@ -98,8 +96,7 @@ This repository includes three comprehensive instruction documents:
 
 🐛 **Troubleshooting**
 
-Common Issues
-
+Common Issues:
      Error: "argument is of length zero"
           Cause: Years with only one site cannot calculate beta diversity
           Solution: Analysis automatically skips these years and reports them
@@ -123,10 +120,8 @@ Common Issues
 If you use this code in your research, please cite:
      Methods in Stream Ecology Textbook:
           [INSERT BOOK CITATION}
-     
      For Hill numbers methodology:
-          Chao, A., Chiu, C.H., and Jost, L. 2014. Unifying species diversity, phylogenetic diversity, functional diversity, and related similarity and differentiation measures through Hill numbers. Annual Review of Ecology, Evolution, and Systematics 45:297-324.
-          
+          Chao, A., Chiu, C.H., and Jost, L. 2014. Unifying species diversity, phylogenetic diversity, functional diversity, and related similarity and differentiation measures through Hill numbers. Annual Review of Ecology, Evolution, and Systematics 45:297-324.   
      For beta diversity interpretation:
           Jost, L. 2007. Partitioning diversity into independent alpha and beta components. Ecology 88(10):2427-2439.
 
