@@ -142,7 +142,6 @@ If you use this code in your research, please cite:
 
 **Methods in Stream Ecology Textbook:**
 
-Lamberti, G.A., and Hauer, F.R. (Eds.). 2017. Methods in Stream Ecology, Volume 1: Ecosystem Structure (3rd Edition). Academic Press, Cambridge, MA.
 
 **For Hill numbers methodology:**
 
