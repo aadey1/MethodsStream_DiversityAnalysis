@@ -137,14 +137,12 @@ This repository includes three comprehensive instruction documents:
 
 📚 **Citation**
   If you use this code in your research, please cite:
-    Methods in Stream Ecology Textbook:
-      [INSERT BOOK CITATION}
-
-    For Hill numbers methodology:
-      Chao, A., Chiu, C.H., and Jost, L. 2014. Unifying species diversity, phylogenetic diversity, functional diversity, and related similarity and differentiation measures through Hill numbers. Annual Review of Ecology, Evolution, and Systematics 45:297-324.
-
-    For beta diversity interpretation:
-      Jost, L. 2007. Partitioning diversity into independent alpha and beta components. Ecology 88(10):2427-2439.
+       Methods in Stream Ecology Textbook: [INSERT BOOK CITATION}
+       
+       For Hill numbers methodology:
+            Chao, A., Chiu, C.H., and Jost, L. 2014. Unifying species diversity, phylogenetic diversity, functional diversity, and related similarity and differentiation measures through Hill numbers. Annual Review of Ecology, Evolution, and Systematics 45:297-324.
+       For beta diversity interpretation:
+            Jost, L. 2007. Partitioning diversity into independent alpha and beta components. Ecology 88(10):2427-2439.
 
 🤝 **Contributing**
   This is an educational resource. If you find errors or have suggestions for improvement, please:
