@@ -38,7 +38,6 @@ Expected Run Time
   Large datasets (> 200 sites): ~5-10 minutes
 
 📖 **Documentation**
-
 This repository includes three comprehensive instruction documents:
 
   1. **Instructions-DiversityAnalysis.docx**
@@ -87,36 +86,40 @@ This repository includes three comprehensive instruction documents:
 
 🎯 **Learning Objectives**
      After completing this module, you will be able to:
+          
           1. ✅ Calculate alpha, beta, and gamma diversity for stream communities
+          
           2. ✅ Understand the differences between Hill numbers (q=0, 1, 2)
+          
           3. ✅ Compare and interpret multiple beta diversity metrics
+          
           4. ✅ Identify which taxa drive community differences
+          
           5. ✅ Assess temporal patterns in diversity
+          
           6. ✅ Report diversity results in publications
 
 🐛 **Troubleshooting**
-
-Common Issues:
-     Error: "argument is of length zero"
-          Cause: Years with only one site cannot calculate beta diversity
-          Solution: Analysis automatically skips these years and reports them
+     Common Issues:
+          Error: "argument is of length zero"
+               Cause: Years with only one site cannot calculate beta diversity
+               Solution: Analysis automatically skips these years and reports them
      
-     Error: Date parsing fails
-          Cause: Date format doesn't match expected format
-          Solution: Check your date format and adjust the as.POSIXct() format string
+          Error: Date parsing fails
+               Cause: Date format doesn't match expected format
+               Solution: Check your date format and adjust the as.POSIXct() format string
      
-     Warning: "Unknown or uninitialised column"
-          Cause: Columns not pre-initialized
-          Solution: Already fixed in the current version of code
+          Warning: "Unknown or uninitialised column"
+               Cause: Columns not pre-initialized
+               Solution: Already fixed in the current version of code
      
-     Results show NA for Jaccard/Bray-Curtis
-          Cause: Years with < 2 sites (need pairwise comparisons)
-          Check: Look at console output - it reports which years are skipped
+          Results show NA for Jaccard/Bray-Curtis
+               Cause: Years with < 2 sites (need pairwise comparisons)
+               Check: Look at console output - it reports which years are skipped
      
-     See QuickReferenceGuide.docx for more detailed troubleshooting.
+          See QuickReferenceGuide.docx for more detailed troubleshooting.
 
 📚 **Citation**
-
 If you use this code in your research, please cite:
      Methods in Stream Ecology Textbook:
           [INSERT BOOK CITATION}
@@ -126,22 +129,18 @@ If you use this code in your research, please cite:
           Jost, L. 2007. Partitioning diversity into independent alpha and beta components. Ecology 88(10):2427-2439.
 
 🤝 **Contributing**
-
 This is an educational resource. If you find errors or have suggestions for improvement, please:
      1. Open an issue describing the problem or suggestion
      2. For code fixes, submit a pull request
      3. For documentation improvements, submit suggested edits
 
 📧 **Contact**
-
 For questions about this module:
-
      **Content questions**: Refer to the Methods in Stream Ecology textbook
      **Technical issues**: Check the troubleshooting section in QuickReferenceGuide.docx
      **Bug reports**: Open an issue in this repository
 
 📜 **License**
-
 This educational material is provided for use with the Methods in Stream Ecology textbook. Please use responsibly and cite appropriately.
 
 **Happy analyzing!** 🐛📊🌊
