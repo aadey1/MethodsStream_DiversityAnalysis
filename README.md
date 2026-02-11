@@ -100,7 +100,7 @@ This repository includes three comprehensive instruction documents:
           6. ✅ Report diversity results in publications
 
 🐛 **Troubleshooting**
-     Common Issues:
+Common Issues:
           Error: "argument is of length zero"
                Cause: Years with only one site cannot calculate beta diversity
                Solution: Analysis automatically skips these years and reports them
@@ -144,8 +144,3 @@ For questions about this module:
 This educational material is provided for use with the Methods in Stream Ecology textbook. Please use responsibly and cite appropriately.
 
 **Happy analyzing!** 🐛📊🌊
-
-
-
-
-
