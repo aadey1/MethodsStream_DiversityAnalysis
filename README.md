@@ -17,28 +17,6 @@ This repository calculates three types of diversity metrics:
 
 3. **Gamma Diversity (γ)**: Total regional diversity across all sites
 
-
-📁 **Repository Structure**
-
-MethodsStream_DiversityAnalysis/
-├── README.md                          # This file
-├── Code/
-│   └── DiversityAnalyses.Rmd          # Main R Markdown analysis script
-├── Data/
-│   ├── Raw/                           # Input data files
-│   │   ├── masterTaxaGenus.csv        # Taxonomic reference data
-│   │   ├── stationBenthicsTESTSITE.csv      # Benthic sample data
-│   │   └── stationInfoBenSampsTESTSITE.csv  # Station metadata
-│   └── ProcessedOutput/               # Analysis results
-│       ├── alpha_diversity_results.csv      # Site-level diversity
-│       ├── diversity_summary_by_year.csv    # Annual summary
-│       ├── jaccard_by_year.csv              # Jaccard results
-│       └── braycurtis_by_year.csv           # Bray-Curtis results
-└── InstructionDocuments/
-    ├── Instructions-DiversityAnalysis.docx           # Step-by-step guide
-    ├── QuickReferenceGuide.docx                      # Quick reference
-    └── DiversityAnalysisResultsInterpretation.docx  # How to interpret results
-
 🚀 **Quick Start**
 Prerequisites:
 Install required R packaces
