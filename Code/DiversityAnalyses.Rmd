@@ -1,0 +1,461 @@
+---
+title: "Methods Example: Diversity Metrics"
+author: "Amaryllis Adey"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This code accompanies the Methods in Stream Ecology Benthic Invertebrates Chapter. The goal of this code is to assess macroinvertebrate diversity between stream sites using alpha, beta, and gamma diversity. We will be using the same dataset as is used in the IBI assessment.
+
+# Alpha, Beta, and Gamma Diversity Analysis for Stream Macroinvertebrates
+
+This script calculates diversity metrics using Hill Number (q = 0, 1, 2), Jaccard index, and Bray-Curtis dissimilarity.
+
+Install the required packages (run once)
+```{r}
+# Load libraries
+library(vegan)
+library(iNEXT)
+library(betapart)
+library(dplyr)
+library(tidyr)
+```
+
+## 1. Data Loading and Preparation
+```{r}
+# Replace with your actual file paths
+master_taxa <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/masterTaxaGenus.csv")
+benthics <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/stationBenthicsTESTSITE.csv")
+station_info <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/stationInfoBenSampsTESTSITE.csv")
+
+# Preview the data
+cat("=== DATA PREVIEW ===\n")
+cat("Benthics data:\n")
+head(benthics)
+cat("\nStation info data:\n")
+head(station_info)
+
+# Extract year from collection date - FIXED VERSION
+# Handle different date formats and potential parsing issues
+station_info$Year <- as.numeric(format(as.POSIXct(station_info$Collection.Date, 
+                                                   format = "%Y-%m-%dT%H:%M:%SZ"), 
+                                       "%Y"))
+
+# Check for NA values in Year
+cat("\nChecking for NA values in Year:\n")
+cat("Number of NAs:", sum(is.na(station_info$Year)), "\n")
+
+# If there are NAs, try alternative date parsing
+if(sum(is.na(station_info$Year)) > 0) {
+  cat("Attempting alternative date parsing...\n")
+  na_indices <- which(is.na(station_info$Year))
+  
+  # Try parsing as simple date
+  for(i in na_indices) {
+    date_str <- station_info$Collection.Date[i]
+    
+    # Try multiple formats
+    parsed_date <- tryCatch({
+      as.Date(date_str)
+    }, error = function(e) {
+      tryCatch({
+        as.Date(date_str, format = "%m/%d/%Y")
+      }, error = function(e) {
+        NA
+      })
+    })
+    
+    if(!is.na(parsed_date)) {
+      station_info$Year[i] <- as.numeric(format(parsed_date, "%Y"))
+    }
+  }
+  
+  cat("After alternative parsing, NAs remaining:", sum(is.na(station_info$Year)), "\n")
+}
+
+# Remove rows with NA years if any remain
+if(sum(is.na(station_info$Year)) > 0) {
+  cat("Removing", sum(is.na(station_info$Year)), "rows with unparseable dates\n")
+  station_info <- station_info %>% filter(!is.na(Year))
+}
+
+# Merge benthics with station info
+data_merged <- benthics %>%
+  left_join(station_info %>% 
+              select(BenSampID, Collection.Date, Year, Season, StationID),
+            by = c("BenSampID", "StationID"))
+
+# Remove any merged rows with NA Year
+data_merged <- data_merged %>% filter(!is.na(Year))
+
+# Check the merged data
+cat("\nMerged data summary:\n")
+cat("Number of rows:", nrow(data_merged), "\n")
+cat("Year range:", min(data_merged$Year, na.rm = TRUE), "to", 
+    max(data_merged$Year, na.rm = TRUE), "\n")
+cat("Number of unique sites:", length(unique(paste(data_merged$StationID, 
+                                                     data_merged$BenSampID))), "\n")
+```
+
+## 2. Create a site x species matrix
+```{r}
+cat("\n=== CREATING SITE x SPECIES MATRIX ===\n")
+
+# Create a unique site identifier
+data_merged$SiteID <- paste(data_merged$StationID, 
+                             data_merged$BenSampID, 
+                             sep = "_")
+
+# Create site x species abundance matrix
+species_matrix <- data_merged %>%
+  select(SiteID, FinalID, Individuals) %>%
+  group_by(SiteID, FinalID) %>%
+  summarise(Abundance = sum(Individuals), .groups = "drop") %>%
+  pivot_wider(names_from = FinalID, 
+              values_from = Abundance, 
+              values_fill = 0)
+
+# Convert to matrix format
+site_names <- species_matrix$SiteID
+species_matrix <- as.matrix(species_matrix[, -1])
+rownames(species_matrix) <- site_names
+
+cat("Matrix dimensions:", nrow(species_matrix), "sites x", 
+    ncol(species_matrix), "taxa\n")
+
+# Create metadata table
+site_metadata <- data_merged %>%
+  select(SiteID, StationID, BenSampID, Year, Season) %>%
+  distinct()
+
+```
+
+## 3. Alpha Diversity (within-site diversity)
+```{r}
+cat("\n=== ALPHA DIVERSITY ===\n")
+
+# Calculate alpha diversity using Hill numbers
+alpha_diversity <- data.frame(
+  SiteID = rownames(species_matrix),
+  
+  # q = 0: Species richness
+  q0_richness = apply(species_matrix, 1, function(x) sum(x > 0)),
+  
+  # q = 1: Hill-Shannon diversity
+  q1_shannon = apply(species_matrix, 1, function(x) {
+    if(sum(x) == 0) return(0)
+    p <- x[x > 0] / sum(x)
+    exp(-sum(p * log(p)))
+  }),
+  
+  # q = 2: Hill-Simpson diversity
+  q2_simpson = apply(species_matrix, 1, function(x) {
+    if(sum(x) == 0) return(0)
+    p <- x[x > 0] / sum(x)
+    1 / sum(p^2)
+  }),
+  
+  total_abundance = rowSums(species_matrix)
+)
+
+# Add metadata
+alpha_diversity <- alpha_diversity %>%
+  left_join(site_metadata, by = "SiteID")
+
+cat("\nAlpha Diversity Summary:\n")
+summary(alpha_diversity[, c("q0_richness", "q1_shannon", "q2_simpson")])
+
+# Alpha diversity by year
+alpha_by_year <- alpha_diversity %>%
+  group_by(Year) %>%
+  summarise(
+    mean_richness = mean(q0_richness, na.rm = TRUE),
+    sd_richness = sd(q0_richness, na.rm = TRUE),
+    mean_shannon = mean(q1_shannon, na.rm = TRUE),
+    sd_shannon = sd(q1_shannon, na.rm = TRUE),
+    mean_simpson = mean(q2_simpson, na.rm = TRUE),
+    sd_simpson = sd(q2_simpson, na.rm = TRUE),
+    n_sites = n()
+  )
+
+cat("\nAlpha diversity by year:\n")
+print(alpha_by_year)
+```
+
+## 4. Gamma Diversity (total diversity across all sites)
+
+```{r}
+cat("\n=== GAMMA DIVERSITY ===\n")
+
+# Calculate gamma diversity for each year
+gamma_by_year <- data_merged %>%
+  group_by(Year) %>%
+  summarise(
+    gamma_q0 = length(unique(FinalID)),
+    .groups = "drop"
+  ) %>%
+  mutate(gamma_q1 = NA_real_, gamma_q2 = NA_real_)  # Initialize columns
+
+# Calculate q = 1 and q = 2 for gamma diversity by year
+for(year in gamma_by_year$Year) {
+  year_data <- data_merged %>%
+    filter(Year == year) %>%
+    group_by(FinalID) %>%
+    summarise(total_abundance = sum(Individuals), .groups = "drop")
+  
+  # Calculate proportions
+  p <- year_data$total_abundance / sum(year_data$total_abundance)
+  
+  # q = 1: Shannon
+  gamma_by_year$gamma_q1[gamma_by_year$Year == year] <- exp(-sum(p * log(p)))
+  
+  # q = 2: Simpson
+  gamma_by_year$gamma_q2[gamma_by_year$Year == year] <- 1 / sum(p^2)
+}
+
+cat("Gamma diversity by year:\n")
+print(gamma_by_year)
+
+```
+
+## 5. Beta diversity Using Hill Numbers (β = γ/α)
+```{r}
+cat("\n=== BETA DIVERSITY (HILL NUMBERS) ===\n")
+
+# Calculate mean alpha for each year
+mean_alpha_by_year <- alpha_diversity %>%
+  group_by(Year) %>%
+  summarise(
+    mean_alpha_q0 = mean(q0_richness, na.rm = TRUE),
+    mean_alpha_q1 = mean(q1_shannon, na.rm = TRUE),
+    mean_alpha_q2 = mean(q2_simpson, na.rm = TRUE)
+  )
+
+# Calculate beta diversity: β = γ/α
+beta_hill <- gamma_by_year %>%
+  left_join(mean_alpha_by_year, by = "Year") %>%
+  mutate(
+    beta_q0 = gamma_q0 / mean_alpha_q0,
+    beta_q1 = gamma_q1 / mean_alpha_q1,
+    beta_q2 = gamma_q2 / mean_alpha_q2
+  )
+
+cat("Beta Diversity using Hill Numbers:\n")
+print(beta_hill)
+
+cat("\nInterpretation:")
+cat("\n- Beta values close to 1: sites have very similar species composition")
+cat("\n- Beta values much greater than 1: high turnover in species composition")
+cat("\n- q=0 (richness): emphasizes rare species")
+cat("\n- q=1 (Shannon): balanced emphasis")
+cat("\n- q=2 (Simpson): emphasizes common species\n")
+
+```
+
+## 6. Beta Diversity Using Jaccard Index (presence/absence)
+```{r}
+cat("\n=== BETA DIVERSITY (JACCARD INDEX) ===\n")
+
+jaccard_by_year <- list()
+
+for(year in unique(site_metadata$Year)) {
+  # Get sites for this year
+  sites_year <- site_metadata %>% 
+    filter(Year == year) %>% 
+    pull(SiteID)
+  
+  # Skip if fewer than 2 sites
+  if(length(sites_year) < 2) {
+    cat("Skipping year", year, "- only", length(sites_year), "site(s)\n")
+    next
+  }
+  
+  # Subset matrix
+  year_matrix <- species_matrix[rownames(species_matrix) %in% sites_year, , drop = FALSE]
+  
+  # Check if matrix has data
+  if(is.null(nrow(year_matrix)) || nrow(year_matrix) < 2) {
+    cat("Skipping year", year, "- insufficient data\n")
+    next
+  }
+  
+  # Convert to presence/absence
+  year_pa <- (year_matrix > 0) * 1
+  
+  # Calculate Jaccard dissimilarity
+  jaccard_dist <- vegdist(year_pa, method = "jaccard", binary = TRUE)
+  
+  jaccard_by_year[[as.character(year)]] <- data.frame(
+    Year = year,
+    mean_jaccard = mean(jaccard_dist),
+    median_jaccard = median(jaccard_dist),
+    sd_jaccard = sd(jaccard_dist),
+    n_comparisons = length(jaccard_dist)
+  )
+}
+
+# Combine results
+if(length(jaccard_by_year) > 0) {
+  jaccard_results <- do.call(rbind, jaccard_by_year)
+  rownames(jaccard_results) <- NULL
+  
+  cat("Jaccard Dissimilarity by Year:\n")
+  print(jaccard_results)
+} else {
+  cat("No Jaccard results calculated - insufficient sites per year\n")
+  jaccard_results <- data.frame()
+}
+
+```
+
+## 7. Beta Diversity. Using Bray-Curtis (with abundance)
+```{r}
+cat("\n=== BETA DIVERSITY (BRAY-CURTIS) ===\n")
+
+braycurtis_by_year <- list()
+
+for(year in unique(site_metadata$Year)) {
+  # Get sites for this year
+  sites_year <- site_metadata %>% 
+    filter(Year == year) %>% 
+    pull(SiteID)
+  
+  # Skip if fewer than 2 sites
+  if(length(sites_year) < 2) {
+    cat("Skipping year", year, "- only", length(sites_year), "site(s)\n")
+    next
+  }
+  
+  # Subset matrix
+  year_matrix <- species_matrix[rownames(species_matrix) %in% sites_year, , drop = FALSE]
+  
+  # Check if matrix has data
+  if(is.null(nrow(year_matrix)) || nrow(year_matrix) < 2) {
+    cat("Skipping year", year, "- insufficient data\n")
+    next
+  }
+  
+  # Calculate Bray-Curtis dissimilarity
+  bc_dist <- vegdist(year_matrix, method = "bray")
+  
+  braycurtis_by_year[[as.character(year)]] <- data.frame(
+    Year = year,
+    mean_braycurtis = mean(bc_dist),
+    median_braycurtis = median(bc_dist),
+    sd_braycurtis = sd(bc_dist),
+    n_comparisons = length(bc_dist)
+  )
+}
+
+# Combine results
+if(length(braycurtis_by_year) > 0) {
+  braycurtis_results <- do.call(rbind, braycurtis_by_year)
+  rownames(braycurtis_results) <- NULL
+  
+  cat("Bray-Curtis Dissimilarity by Year:\n")
+  print(braycurtis_results)
+} else {
+  cat("No Bray-Curtis results calculated - insufficient sites per year\n")
+  braycurtis_results <- data.frame()
+}
+
+```
+
+## 8. Comprehensize Summary Table
+```{r}
+cat("\n=== COMPREHENSIVE DIVERSITY SUMMARY ===\n")
+
+# Combine all results
+diversity_summary <- beta_hill
+
+# Add Jaccard if available
+if(nrow(jaccard_results) > 0) {
+  diversity_summary <- diversity_summary %>%
+    left_join(jaccard_results %>% select(Year, mean_jaccard), by = "Year")
+}
+
+# Add Bray-Curtis if available
+if(nrow(braycurtis_results) > 0) {
+  diversity_summary <- diversity_summary %>%
+    left_join(braycurtis_results %>% select(Year, mean_braycurtis), by = "Year")
+}
+
+print(diversity_summary)
+```
+
+## 9. Export Results
+```{r}
+cat("\n=== EXPORTING RESULTS ===\n")
+
+# Save alpha diversity results
+write.csv(alpha_diversity, "alpha_diversity_results.csv", row.names = FALSE)
+cat("Saved: alpha_diversity_results.csv\n")
+
+# Save comprehensive summary
+write.csv(diversity_summary, "diversity_summary_by_year.csv", row.names = FALSE)
+cat("Saved: diversity_summary_by_year.csv\n")
+
+# Save individual metric tables
+write.csv(jaccard_results, "jaccard_by_year.csv", row.names = FALSE)
+cat("Saved: jaccard_by_year.csv\n")
+
+write.csv(braycurtis_results, "braycurtis_by_year.csv", row.names = FALSE)
+cat("Saved: braycurtis_by_year.csv\n")
+
+cat("\n=== Analysis Complete! ===\n")
+cat("Files saved:\n")
+cat("- alpha_diversity_results.csv\n")
+cat("- diversity_summary_by_year.csv\n")
+cat("- jaccard_by_year.csv\n")
+cat("- braycurtis_by_year.csv\n")
+```
+
+# 10. Optional: Advanced Analysis with iNEXT
+```{r}
+cat("\n=== OPTIONAL: RAREFACTION/EXTRAPOLATION WITH iNEXT ===\n")
+
+# Example: Run iNEXT for a single year
+# This provides standardized diversity estimates accounting for sampling effort
+
+# Select one year for demonstration
+demo_year <- 2010
+demo_sites <- site_metadata %>% 
+  filter(Year == demo_year) %>% 
+  pull(SiteID)
+
+# Prepare data for iNEXT (list of abundance vectors)
+demo_data <- list()
+for(site in demo_sites[1:min(5, length(demo_sites))]) {  # Limit to 5 sites for speed
+  site_abundances <- species_matrix[site, ]
+  demo_data[[site]] <- site_abundances[site_abundances > 0]
+}
+
+# Run iNEXT
+if(length(demo_data) > 0) {
+  cat("\nRunning iNEXT for year", demo_year, "(first 5 sites)...\n")
+  inext_result <- iNEXT(demo_data, q = c(0, 1, 2), datatype = "abundance")
+  
+  # View results
+  print(inext_result$AsyEst)
+  
+  # Plot results
+  # plot(inext_result, type = 1)  # Uncomment to see rarefaction curves
+}
+
+cat("\n=== Script Complete ===\n")
+```
+
+
+
+
+
+
+
+
+
+
+
