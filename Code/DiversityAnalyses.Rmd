@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
 ```
 
 This code accompanies the Methods in Stream Ecology Benthic Invertebrates Chapter. The goal of this code is to assess macroinvertebrate diversity between stream sites using alpha, beta, and gamma diversity. We will be using the same dataset as is used in the IBI assessment.
@@ -17,20 +18,20 @@ This script calculates diversity metrics using Hill Number (q = 0, 1, 2), Jaccar
 
 Install the required packages (run once)
 ```{r}
-# Load libraries
-library(vegan)
-library(iNEXT)
-library(betapart)
-library(dplyr)
-library(tidyr)
+# Install packages if necessary
+if(!require(vegan)) install.packages('vegan')
+if(!require(iNEXT)) install.packages('iNEXT')
+if(!require(betapart)) install.packages('betapart')
+if(!require(dplyr)) install.packages('dplyr')
+if(!require(tidyr)) install.packages('tidyr')
 ```
 
 ## 1. Data Loading and Preparation
 ```{r}
 # Replace with your actual file paths
-master_taxa <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/masterTaxaGenus.csv")
-benthics <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/stationBenthicsTESTSITE.csv")
-station_info <- read.csv("~/Library/CloudStorage/Dropbox/VT/MethodsChapter/SCI-Bioassessment-Exercise-main/data/raw/stationInfoBenSampsTESTSITE.csv")
+master_taxa <- read.csv("../Data/Raw/masterTaxaGenus.csv")
+benthics <- read.csv("../Data/Raw/stationBenthicsTESTSITE.csv")
+station_info <- read.csv("../Data/Raw/stationInfoBenSampsTESTSITE.csv")
 
 # Preview the data
 cat("=== DATA PREVIEW ===\n")
